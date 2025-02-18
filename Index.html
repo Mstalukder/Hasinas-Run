@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hasina’s Run: Political Dash</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    const config = {
+      type: Phaser.AUTO,
+      width: 800,
+      height: 600,
+      physics: {
+        default: 'arcade',
+        arcade: {
+          gravity: { y: 500 },
+          debug: false
+        }
+      },
+      scene: {
+        preload: preload,
+        create: create,
+        update: update
+      }
+    };
+
+    let player;
+    let obstacles;
+    let score = 0;
+    let scoreText;
+    let gameOver = false;
+    let powerUps;
+    let cursors;
+
+    const game = new Phaser.Game(config);
+
+    function preload() {
+      this.load.image('background', 'https://i.imgur.com/3ZQZQ9m.png'); // Replace with your background image
+      this.load.image('player', 'https://i.imgur.com/5QZQZ9m.png'); // Replace with your player sprite
+      this.load.image('obstacle', 'https://i.imgur.com/7QZQZ9m.png'); // Replace with your obstacle sprite
+      this.load.image('powerUp', 'https://i.imgur.com/9QZQZ9m.png'); // Replace with your power-up sprite
+      this.load.audio('gameOverSound', 'https://www.soundjay.com/misc/sounds/fail-trombone-01.mp3'); // Replace with your game over sound
+    }
+
+    function create() {
+      // Add background
+      this.add.image(400, 300, 'background');
+
+      // Add player
+      player = this.physics.add.sprite(100, 450, 'player');
+      player.setCollideWorldBounds(true);
+
+      // Add obstacles group
+      obstacles = this.physics.add.group();
+      spawnObstacle();
+
+      // Add power-ups group
+      powerUps = this.physics.add.group();
+
+      // Add score text
+      scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
+
+      // Add collisions
+      this.physics.add.collider(player, obstacles, hitObstacle, null, this);
+      this.physics.add.overlap(player, powerUps, collectPowerUp, null, this);
+
+      // Add keyboard input
+      cursors = this.input.keyboard.createCursorKeys();
+
+      // Spawn obstacles every 1.5 seconds
+      this.time.addEvent({
+        delay: 1500,
+        callback: spawnObstacle,
+        callbackScope: this,
+        loop: true
+      });
+
+      // Spawn power-ups every 5 seconds
+      this.time.addEvent({
+        delay: 5000,
+        callback: spawnPowerUp,
+        callbackScope: this,
+        loop: true
+      });
+    }
+
+    function update() {
+      if (gameOver) return;
+
+      // Player movement
+      if (cursors.up.isDown && player.body.touching.down) {
+        player.setVelocityY(-300);
+      }
+
+      // Update score
+      score += 1;
+      scoreText.setText('Score: ' + score);
+    }
+
+    function spawnObstacle() {
+      const obstacle = obstacles.create(800, Phaser.Math.Between(400, 550), 'obstacle');
+      obstacle.setVelocityX(-200);
+      obstacle.setCollideWorldBounds(false);
+    }
+
+    function spawnPowerUp() {
+      const powerUp = powerUps.create(800, Phaser.Math.Between(400, 550), 'powerUp');
+      powerUp.setVelocityX(-150);
+      powerUp.setCollideWorldBounds(false);
+    }
+
+    function hitObstacle(player, obstacle) {
+      gameOver = true;
+      this.sound.play('gameOverSound');
+      this.physics.pause();
+      this.add.text(300, 300, 'Game Over!', { fontSize: '48px', fill: '#fff' });
+    }
+
+    function collectPowerUp(player, powerUp) {
+      powerUp.disableBody(true, true);
+      player.setVelocityY(-300); // Jump boost
+    }
+  </script>
+</body>
+</html>
